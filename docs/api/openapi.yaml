@@ -1,0 +1,26 @@
+# OpenAPI Specification
+
+This file should be auto-generated from the FastAPI application.
+
+## Generation
+```bash
+# Start the API server
+poetry run python -m apps.api.src.main
+
+# Download the spec
+curl http://localhost:8000/openapi.json -o docs/api/openapi.yaml
+```
+
+## Alternative (using openapi-typescript)
+```bash
+npx openapi-typescript http://localhost:8000/openapi.json --output apps/frontend/src/types/api.ts
+```
+
+## Current Endpoints
+See [api-reference.md](./api-reference.md) for the full endpoint documentation.
+
+## Authentication
+All endpoints except login/register require:
+```
+Authorization: Bearer <JWT_TOKEN>
+```

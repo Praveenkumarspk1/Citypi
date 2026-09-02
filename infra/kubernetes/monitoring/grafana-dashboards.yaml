@@ -1,0 +1,272 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboards
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+data:
+  ai-smart-city-overview.json: |
+    {
+      "dashboard": {
+        "title": "AI Smart City Concierge - Overview",
+        "tags": ["ai-smart-city", "overview"],
+        "timezone": "browser",
+        "panels": [
+          {
+            "id": 1,
+            "title": "API Request Rate",
+            "type": "graph",
+            "datasource": "Prometheus",
+            "targets": [
+              {
+                "expr": "rate(http_requests_total{job=\"ai-smart-city-api\"}[5m])",
+                "legendFormat": "{{method}} {{path}}"
+              }
+            ],
+            "xaxis": {"mode": "time"},
+            "yaxes": [{"format": "reqps"}, {"format": "short"}]
+          },
+          {
+            "id": 2,
+            "title": "API Latency (p95)",
+            "type": "graph",
+            "datasource": "Prometheus",
+            "targets": [
+              {
+                "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job=\"ai-smart-city-api\"}[5m]))",
+                "legendFormat": "{{path}}"
+              }
+            ],
+            "xaxis": {"mode": "time"},
+            "yaxes": [{"format": "s"}, {"format": "short"}]
+          },
+          {
+            "id": 3,
+            "title": "Error Rate",
+            "type": "graph",
+            "datasource": "Prometheus",
+            "targets": [
+              {
+                "expr": "rate(http_requests_total{job=\"ai-smart-city-api\",status=~\"5..\"}[5m])",
+                "legendFormat": "5xx errors"
+              },
+              {
+                "expr": "rate(http_requests_total{job=\"ai-smart-city-api\",status=~\"4..\"}[5m])",
+                "legendFormat": "4xx errors"
+              }
+            ],
+            "xaxis": {"mode": "time"},
+            "yaxes": [{"format": "reqps"}, {"format": "short"}]
+          },
+          {
+            "id": 4,
+            "title": "Active WebSocket Connections",
+            "type": "graph",
+            "datasource": "Prometheus",
+            "targets": [
+              {
+                "expr": "websocket_active_connections",
+                "legendFormat": "Active Connections"
+              }
+            ],
+            "xaxis": {"mode": "time"},
+            "yaxes": [{"format": "short"}, {"format": "short"}]
+          },
+          {
+            "id": 5,
+            "title": "Worker Queue Depth",
+            "type": "graph",
+            "datasource": "Prometheus",
+            "targets": [
+              {
+                "expr": "task_queue_depth",
+                "legendFormat": "{{queue}}"
+              }
+            ],
+            "xaxis": {"mode": "time"},
+            "yaxes": [{"format": "short"}, {"format": "short"}]
+          },
+          {
+            "id": 6,
+            "title": "Worker Task Duration",
+            "type": "graph",
+            "datasource": "Prometheus",
+            "targets": [
+              {
+                "expr": "histogram_quantile(0.95, rate(task_duration_seconds_bucket[5m]))",
+                "legendFormat": "{{task_name}}"
+              }
+            ],
+            "xaxis": {"mode": "time"},
+            "yaxes": [{"format": "s"}, {"format": "short"}]
+          },
+          {
+            "id": 7,
+            "title": "Database Connections",
+            "type": "graph",
+            "datasource": "Prometheus",
+            "targets": [
+              {
+                "expr": "pg_stat_database_numbackends{datname=\"ai_smart_city\"}",
+                "legendFormat": "Active Connections"
+              },
+              {
+                "expr": "pg_settings_max_connections",
+                "legendFormat": "Max Connections"
+              }
+            ],
+            "xaxis": {"mode": "time"},
+            "yaxes": [{"format": "short"}, {"format": "short"}]
+          },
+          {
+            "id": 8,
+            "title": "Cache Hit Rate",
+            "type": "graph",
+            "datasource": "Prometheus",
+            "targets": [
+              {
+                "expr": "rate(redis_keyspace_hits_total[5m]) / (rate(redis_keyspace_hits_total[5m]) + rate(redis_keyspace_misses_total[5m]))",
+                "legendFormat": "Hit Rate"
+              }
+            ],
+            "xaxis": {"mode": "time"},
+            "yaxes": [{"format": "percentunit"}, {"format": "short"}]
+          }
+        ],
+        "time": {
+          "from": "now-1h",
+          "to": "now"
+        },
+        "refresh": "30s"
+      }
+    }
+  ai-smart-city-business.json: |
+    {
+      "dashboard": {
+        "title": "AI Smart City Concierge - Business Metrics",
+        "tags": ["ai-smart-city", "business"],
+        "timezone": "browser",
+        "panels": [
+          {
+            "id": 1,
+            "title": "Daily Active Users",
+            "type": "stat",
+            "datasource": "Prometheus",
+            "targets": [
+              {
+                "expr": "count(count by (user_id) (user_sessions_total))",
+                "legendFormat": "DAU"
+              }
+            ]
+          },
+          {
+            "id": 2,
+            "title": "Itineraries Created",
+            "type": "graph",
+            "datasource": "Prometheus",
+            "targets": [
+              {
+                "expr": "rate(itineraries_created_total[1h])",
+                "legendFormat": "Per Hour"
+              }
+            ],
+            "xaxis": {"mode": "time"},
+            "yaxes": [{"format": "short"}, {"format": "short"}]
+          },
+          {
+            "id": 3,
+            "title": "POI Searches",
+            "type": "graph",
+            "datasource": "Prometheus",
+            "targets": [
+              {
+                "expr": "rate(poi_searches_total[5m])",
+                "legendFormat": "Searches/min"
+              }
+            ],
+            "xaxis": {"mode": "time"},
+            "yaxes": [{"format": "reqps"}, {"format": "short"}]
+          },
+          {
+            "id": 4,
+            "title": "Transit Routes Planned",
+            "type": "graph",
+            "datasource": "Prometheus",
+            "targets": [
+              {
+                "expr": "rate(transit_routes_planned_total[5m])",
+                "legendFormat": "Routes/min"
+              }
+            ],
+            "xaxis": {"mode": "time"},
+            "yaxes": [{"format": "reqps"}, {"format": "short"}]
+          },
+          {
+            "id": 5,
+            "title": "Chat Conversations",
+            "type": "graph",
+            "datasource": "Prometheus",
+            "targets": [
+              {
+                "expr": "rate(chat_conversations_started_total[5m])",
+                "legendFormat": "New/min"
+              },
+              {
+                "expr": "rate(chat_messages_total[5m])",
+                "legendFormat": "Messages/min"
+              }
+            ],
+            "xaxis": {"mode": "time"},
+            "yaxes": [{"format": "reqps"}, {"format": "short"}]
+          },
+          {
+            "id": 6,
+            "title": "User Retention (7-day)",
+            "type": "stat",
+            "datasource": "Prometheus",
+            "targets": [
+              {
+                "expr": "user_retention_7d",
+                "legendFormat": "Retention %"
+              }
+            ]
+          },
+          {
+            "id": 7,
+            "title": "Average Session Duration",
+            "type": "graph",
+            "datasource": "Prometheus",
+            "targets": [
+              {
+                "expr": "histogram_quantile(0.5, rate(session_duration_seconds_bucket[5m]))",
+                "legendFormat": "Median"
+              },
+              {
+                "expr": "histogram_quantile(0.95, rate(session_duration_seconds_bucket[5m]))",
+                "legendFormat": "P95"
+              }
+            ],
+            "xaxis": {"mode": "time"},
+            "yaxes": [{"format": "s"}, {"format": "short"}]
+          },
+          {
+            "id": 8,
+            "title": "Feature Usage",
+            "type": "piechart",
+            "datasource": "Prometheus",
+            "targets": [
+              {
+                "expr": "sum by (feature) (rate(feature_usage_total[1h]))",
+                "legendFormat": "{{feature}}"
+              }
+            ]
+          }
+        ],
+        "time": {
+          "from": "now-6h",
+          "to": "now"
+        },
+        "refresh": "1m"
+      }
+    }

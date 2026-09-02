@@ -1,0 +1,45 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: api
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: api
+          service: concierge-api
+          __path__: /var/log/api/*.log
+
+  - job_name: worker
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: worker
+          service: concierge-worker
+          __path__: /var/log/worker/*.log
+
+  - job_name: websocket
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: websocket
+          service: concierge-websocket
+          __path__: /var/log/websocket/*.log
+
+  - job_name: system
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: system
+          __path__: /var/log/*.log

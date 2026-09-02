@@ -1,0 +1,110 @@
+{
+  "name": "AI Smart City Concierge",
+  "short_name": "City Concierge",
+  "description": "Your intelligent city companion - Plan trips, find places, navigate transit, and get weather updates",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0ea5e9",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/icons/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "categories": ["travel", "navigation", "weather", "productivity"],
+  "shortcuts": [
+    {
+      "name": "Plan Trip",
+      "short_name": "Plan",
+      "description": "Create a new itinerary",
+      "url": "/itinerary/new",
+      "icons": [{ "src": "/icons/shortcut-plan.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Search Places",
+      "short_name": "Search",
+      "description": "Find nearby places",
+      "url": "/search",
+      "icons": [{ "src": "/icons/shortcut-search.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Transit",
+      "short_name": "Transit",
+      "description": "Plan transit routes",
+      "url": "/transit",
+      "icons": [{ "src": "/icons/shortcut-transit.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Weather",
+      "short_name": "Weather",
+      "description": "Check weather forecast",
+      "url": "/weather",
+      "icons": [{ "src": "/icons/shortcut-weather.png", "sizes": "192x192" }]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/home.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Home screen with search and recommendations"
+    },
+    {
+      "src": "/screenshots/itinerary.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Itinerary builder with drag-and-drop"
+    }
+  ],
+  "prefer_related_applications": false,
+  "related_applications": []
+}

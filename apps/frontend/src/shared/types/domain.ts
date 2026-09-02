@@ -1,0 +1,20 @@
+export interface Coordinates {
+  lat: number;
+  lng: number;
+}
+
+export interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+  has_next: boolean;
+  has_previous: boolean;
+}
+
+export interface APIError {
+  code: string;
+  message: string;
+  type?: string;
+}

@@ -1,0 +1,41 @@
+[project]
+name = "shared-config"
+version = "0.1.0"
+description = "Shared configuration for AI Smart City Concierge"
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic-settings>=2.1.0",
+    "python-dotenv>=1.0.0",
+    "pyyaml>=6.0.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "mypy>=1.8.0",
+    "ruff>=0.2.0",
+]
+
+[tool.poetry]
+name = "shared-config"
+version = "0.1.0"
+description = "Shared configuration for AI Smart City Concierge"
+authors = ["Your Name <your.email@example.com>"]
+packages = [
+    {include = "shared_config", from = "python"},
+]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+pydantic-settings = "^2.1.0"
+python-dotenv = "^1.0.0"
+pyyaml = "^6.0.1"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.0"
+mypy = "^1.8.0"
+ruff = "^0.2.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

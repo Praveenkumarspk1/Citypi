@@ -1,0 +1,380 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  release:
+    types: [published]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # ===========================================
+  # LINT & TYPE CHECK
+  # ===========================================
+  lint-and-typecheck:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: apps/frontend/package-lock.json
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: apps/api/pyproject.toml
+      
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: apps/frontend
+      
+      - name: Install API dependencies
+        run: pip install -e ".[dev]"
+        working-directory: apps/api
+      
+      - name: Run frontend linting
+        run: npm run lint
+        working-directory: apps/frontend
+      
+      - name: Run frontend type checking
+        run: npm run typecheck
+        working-directory: apps/frontend
+      
+      - name: Run API linting
+        run: |
+          ruff check .
+          black --check .
+          mypy .
+        working-directory: apps/api
+      
+      - name: Run worker linting
+        run: |
+          ruff check .
+          black --check .
+          mypy .
+        working-directory: apps/worker
+
+  # ===========================================
+  # UNIT TESTS
+  # ===========================================
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: test_db
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_pass
+        ports: 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports: 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: apps/api/pyproject.toml
+      
+      - name: Install API dependencies
+        run: pip install -e ".[test]"
+        working-directory: apps/api
+      
+      - name: Install worker dependencies
+        run: pip install -e ".[test]"
+        working-directory: apps/worker
+      
+      - name: Run API unit tests
+        run: pytest tests/unit -v --cov=ai_smart_city_concierge --cov-report=xml
+        working-directory: apps/api
+        env:
+          DATABASE_URL: postgresql://test_user:test_pass@localhost:5432/test_db
+          REDIS_URL: redis://localhost:6379/0
+          APP_ENV: test
+      
+      - name: Run worker unit tests
+        run: pytest tests/unit -v --cov=worker --cov-report=xml
+        working-directory: apps/worker
+        env:
+          DATABASE_URL: postgresql://test_user:test_pass@localhost:5432/test_db
+          REDIS_URL: redis://localhost:6379/0
+          APP_ENV: test
+      
+      - name: Upload API coverage
+        uses: codecov/codecov-action@v3
+        with:
+          files: apps/api/coverage.xml
+          flags: api
+      
+      - name: Upload worker coverage
+        uses: codecov/codecov-action@v3
+        with:
+          files: apps/worker/coverage.xml
+          flags: worker
+
+  # ===========================================
+  # FRONTEND TESTS
+  # ===========================================
+  frontend-tests:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: apps/frontend/package-lock.json
+      
+      - name: Install dependencies
+        run: npm ci
+        working-directory: apps/frontend
+      
+      - name: Run unit tests
+        run: npm run test -- --coverage
+        working-directory: apps/frontend
+      
+      - name: Run E2E tests
+        run: npm run test:e2e
+        working-directory: apps/frontend
+      
+      - name: Upload frontend coverage
+        uses: codecov/codecov-action@v3
+        with:
+          files: apps/frontend/coverage/lcov.info
+          flags: frontend
+
+  # ===========================================
+  # INTEGRATION TESTS
+  # ===========================================
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [lint-and-typecheck, unit-tests, frontend-tests]
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: test_db
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_pass
+        ports: 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports: 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      qdrant:
+        image: qdrant/qdrant:v1.7.0
+        ports: 6333:6333
+        options: >-
+          --health-cmd "curl -f http://localhost:6333/health"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: apps/api/pyproject.toml
+      
+      - name: Install API dependencies
+        run: pip install -e ".[test]"
+        working-directory: apps/api
+      
+      - name: Run API integration tests
+        run: pytest tests/integration -v
+        working-directory: apps/api
+        env:
+          DATABASE_URL: postgresql://test_user:test_pass@localhost:5432/test_db
+          REDIS_URL: redis://localhost:6379/0
+          VECTOR_STORE_URL: http://localhost:6333
+          APP_ENV: test
+      
+      - name: Run worker integration tests
+        run: pytest tests/integration -v
+        working-directory: apps/worker
+        env:
+          DATABASE_URL: postgresql://test_user:test_pass@localhost:5432/test_db
+          REDIS_URL: redis://localhost:6379/0
+          VECTOR_STORE_URL: http://localhost:6333
+          APP_ENV: test
+
+  # ===========================================
+  # BUILD DOCKER IMAGES
+  # ===========================================
+  build-images:
+    name: Build Docker Images
+    runs-on: ubuntu-latest
+    needs: [lint-and-typecheck, unit-tests, frontend-tests, integration-tests]
+    if: github.event_name == 'push' || github.event_name == 'release'
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        service: [api, frontend, worker, websocket]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha
+      
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/Dockerfile.${{ matrix.service }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ===========================================
+  # DEPLOY TO STAGING
+  # ===========================================
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: build-images
+    if: github.ref == 'refs/heads/develop'
+    environment: staging
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Configure kubectl
+        uses: azure/k8s-set-context@v1
+        with:
+          kubeconfig: ${{ secrets.KUBECONFIG_STAGING }}
+      
+      - name: Deploy to staging
+        run: |
+          kubectl set image deployment/api api=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/api:${{ github.sha }} -n ai-smart-city-concierge
+          kubectl set image deployment/frontend frontend=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/frontend:${{ github.sha }} -n ai-smart-city-concierge
+          kubectl set image deployment/worker worker=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/worker:${{ github.sha }} -n ai-smart-city-concierge
+          kubectl set image deployment/websocket websocket=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/websocket:${{ github.sha }} -n ai-smart-city-concierge
+      
+      - name: Wait for rollout
+        run: |
+          kubectl rollout status deployment/api -n ai-smart-city-concierge --timeout=300s
+          kubectl rollout status deployment/frontend -n ai-smart-city-concierge --timeout=300s
+          kubectl rollout status deployment/worker -n ai-smart-city-concierge --timeout=300s
+          kubectl rollout status deployment/websocket -n ai-smart-city-concierge --timeout=300s
+      
+      - name: Run smoke tests
+        run: |
+          curl -f https://api-staging.smartcity.example.com/health/live
+          curl -f https://app-staging.smartcity.example.com/
+          curl -f https://ws-staging.smartcity.example.com/health
+
+  # ===========================================
+  # DEPLOY TO PRODUCTION
+  # ===========================================
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: build-images
+    if: github.event_name == 'release'
+    environment: production
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Configure kubectl
+        uses: azure/k8s-set-context@v1
+        with:
+          kubeconfig: ${{ secrets.KUBECONFIG_PRODUCTION }}
+      
+      - name: Deploy to production (blue-green)
+        run: |
+          # Create new deployment with new image
+          kubectl set image deployment/api api=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/api:${{ github.sha }} -n ai-smart-city-concierge
+          kubectl set image deployment/frontend frontend=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/frontend:${{ github.sha }} -n ai-smart-city-concierge
+          kubectl set image deployment/worker worker=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/worker:${{ github.sha }} -n ai-smart-city-concierge
+          kubectl set image deployment/websocket websocket=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/websocket:${{ github.sha }} -n ai-smart-city-concierge
+      
+      - name: Wait for rollout
+        run: |
+          kubectl rollout status deployment/api -n ai-smart-city-concierge --timeout=600s
+          kubectl rollout status deployment/frontend -n ai-smart-city-concierge --timeout=600s
+          kubectl rollout status deployment/worker -n ai-smart-city-concierge --timeout=600s
+          kubectl rollout status deployment/websocket -n ai-smart-city-concierge --timeout=600s
+      
+      - name: Run smoke tests
+        run: |
+          curl -f https://api.smartcity.example.com/health/live
+          curl -f https://app.smartcity.example.com/
+          curl -f https://ws.smartcity.example.com/health
+      
+      - name: Notify deployment
+        run: |
+          curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} \
+            -H 'Content-type: application/json' \
+            -d '{"text":"🚀 Production deployment completed for ${{ github.repository }}@${{ github.sha }}"}'

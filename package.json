@@ -1,0 +1,25 @@
+{
+  "name": "ai-smart-city-concierge",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AI Smart City Concierge - Production-Grade Architecture (100% Free Tier)",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck"
+  },
+  "devDependencies": {
+    "turbo": "^2.0.0"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
+  "license": "MIT"
+}

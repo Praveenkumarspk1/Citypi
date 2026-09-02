@@ -1,0 +1,66 @@
+"""
+API Schemas Package
+"""
+from .request import (
+    AddMessageRequest,
+    CreateItineraryRequest,
+    CreateUserRequest,
+    MediaUploadRequest,
+    PaginationParams,
+    POISearchRequest,
+    RefreshTokenRequest,
+    StartConversationRequest,
+    TransitRouteRequest,
+    UpdateConversationRequest,
+    UpdateItineraryRequest,
+    UpdateUserPreferencesRequest,
+    UpdateUserProfileRequest,
+    UserLoginRequest,
+    WeatherRequest,
+)
+from .response import (
+    ConversationResponse,
+    ErrorResponse,
+    HealthResponse,
+    ItineraryResponse,
+    MessageResponse,
+    PaginatedResponse,
+    POIResponse,
+    TokenResponse,
+    TransitRouteResponse,
+    UserResponse,
+    WeatherResponse,
+    WSMessageResponse,
+)
+
+__all__ = [
+    # Request schemas
+    "CreateUserRequest",
+    "UserLoginRequest",
+    "RefreshTokenRequest",
+    "UpdateUserProfileRequest",
+    "UpdateUserPreferencesRequest",
+    "StartConversationRequest",
+    "AddMessageRequest",
+    "UpdateConversationRequest",
+    "CreateItineraryRequest",
+    "UpdateItineraryRequest",
+    "POISearchRequest",
+    "TransitRouteRequest",
+    "WeatherRequest",
+    "MediaUploadRequest",
+    "PaginationParams",
+    # Response schemas
+    "UserResponse",
+    "TokenResponse",
+    "MessageResponse",
+    "ConversationResponse",
+    "ItineraryResponse",
+    "POIResponse",
+    "TransitRouteResponse",
+    "WeatherResponse",
+    "HealthResponse",
+    "PaginatedResponse",
+    "ErrorResponse",
+    "WSMessageResponse",
+]

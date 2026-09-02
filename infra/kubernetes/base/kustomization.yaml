@@ -1,0 +1,112 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: ai-smart-city-concierge
+
+resources:
+  - namespace.yaml
+  - rbac.yaml
+  - configmaps.yaml
+  - secrets.yaml
+  - api-deployment.yaml
+  - worker-deployment.yaml
+  - frontend-deployment.yaml
+  - ingress.yaml
+  - hpa.yaml
+
+commonLabels:
+  app.kubernetes.io/name: ai-smart-city-concierge
+  app.kubernetes.io/part-of: ai-smart-city-concierge
+  app.kubernetes.io/managed-by: kustomize
+
+images:
+  - name: ai-smart-city-concierge/api
+    newTag: latest
+  - name: ai-smart-city-concierge/worker
+    newTag: latest
+  - name: ai-smart-city-concierge/websocket
+    newTag: latest
+  - name: ai-smart-city-concierge/frontend
+    newTag: latest
+
+configMapGenerator:
+  - name: api-config
+    behavior: merge
+    literals:
+      - APP_ENV=production
+      - LOG_LEVEL=info
+  - name: worker-config
+    behavior: merge
+    literals:
+      - APP_ENV=production
+      - LOG_LEVEL=info
+  - name: websocket-config
+    behavior: merge
+    literals:
+      - APP_ENV=production
+      - LOG_LEVEL=info
+  - name: frontend-config
+    behavior: merge
+    literals:
+      - VITE_APP_NAME=AI Smart City Concierge
+
+secretGenerator:
+  - name: api-secrets
+    behavior: merge
+    literals:
+      - DATABASE_PASSWORD=changeme
+      - REDIS_PASSWORD=changeme
+      - JWT_SECRET_KEY=changeme-use-strong-random-key
+      - JWT_REFRESH_SECRET_KEY=changeme-use-strong-random-key
+      - GEMINI_API_KEY=your-gemini-api-key
+  - name: worker-secrets
+    behavior: merge
+    literals:
+      - DATABASE_PASSWORD=changeme
+      - REDIS_PASSWORD=changeme
+      - JWT_SECRET_KEY=changeme-use-strong-random-key
+      - GEMINI_API_KEY=your-gemini-api-key
+  - name: websocket-secrets
+    behavior: merge
+    literals:
+      - REDIS_PASSWORD=changeme
+      - JWT_SECRET_KEY=changeme-use-strong-random-key
+      - MESSAGE_BROKER_PASSWORD=changeme
+
+patches:
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: api
+      spec:
+        template:
+          spec:
+            serviceAccountName: api-service-account
+    target:
+      kind: Deployment
+      name: api
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: worker
+      spec:
+        template:
+          spec:
+            serviceAccountName: worker-service-account
+    target:
+      kind: Deployment
+      name: worker
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: websocket
+      spec:
+        template:
+          spec:
+            serviceAccountName: websocket-service-account
+    target:
+      kind: Deployment
+      name: websocket

@@ -1,0 +1,47 @@
+[project]
+name = "api-client"
+version = "0.1.0"
+description = "API Client for AI Smart City Concierge"
+requires-python = ">=3.12"
+dependencies = [
+    "httpx>=0.26.0",
+    "pydantic>=2.6.0",
+    "shared-types>=0.1.0",
+    "shared-config>=0.1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-mock>=3.12.0",
+    "mypy>=1.8.0",
+    "ruff>=0.2.0",
+]
+
+[tool.poetry]
+name = "api-client"
+version = "0.1.0"
+description = "API Client for AI Smart City Concierge"
+authors = ["Your Name <your.email@example.com>"]
+packages = [
+    {include = "api_client", from = "python"},
+]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+httpx = "^0.26.0"
+pydantic = "^2.6.0"
+shared-types = {path = "../shared-types/python", develop = true}
+shared-config = {path = "../shared-config/python", develop = true}
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.0"
+pytest-asyncio = "^0.23.0"
+pytest-mock = "^3.12.0"
+mypy = "^1.8.0"
+ruff = "^0.2.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

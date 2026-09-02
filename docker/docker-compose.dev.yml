@@ -1,0 +1,102 @@
+# Development overrides for docker-compose.yml
+# Usage: docker compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml up -d
+services:
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    volumes:
+      - ./apps/api:/app/apps/api
+      - ./scripts:/app/scripts
+    environment:
+      - ENVIRONMENT=development
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/concierge
+      - REDIS_URL=redis://redis:6379/0
+      - CHROMADB_HOST=chromadb
+      - CHROMADB_PORT=8002
+      - JWT_SECRET_KEY=dev-secret-key-change-in-production
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+    command: poetry run uvicorn apps.api.src.main:app --host 0.0.0.0 --port 8000 --reload
+    develop:
+      watch:
+        - action: sync
+          path: ./apps/api
+          target: /app/apps/api
+        - action: rebuild
+          path: ./apps/api/pyproject.toml
+
+  worker:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.worker
+    volumes:
+      - ./apps/worker:/app/apps/worker
+    environment:
+      - ENVIRONMENT=development
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/concierge
+      - REDIS_URL=redis://redis:6379/0
+    command: poetry run python -m apps.worker.src.main
+
+  websocket:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.websocket
+    volumes:
+      - ./apps/websocket:/app/apps/websocket
+    environment:
+      - ENVIRONMENT=development
+      - REDIS_URL=redis://redis:6379/0
+      - JWT_SECRET_KEY=dev-secret-key-change-in-production
+    command: poetry run uvicorn apps.websocket.src.main:app --host 0.0.0.0 --port 8001 --reload
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.frontend
+      target: development
+    volumes:
+      - ./apps/frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:8000/api/v1
+      - VITE_WS_URL=ws://localhost:8001/ws
+    command: npm run dev
+    ports:
+      - "3000:3000"
+
+  postgres:
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=concierge
+
+  redis:
+    ports:
+      - "6379:6379"
+
+  chromadb:
+    ports:
+      - "8002:8002"
+
+  minio:
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+
+  prometheus:
+    ports:
+      - "9090:9090"
+
+  grafana:
+    ports:
+      - "3001:3001"
+
+  loki:
+    ports:
+      - "3100:3100"
+
+  jaeger:
+    ports:
+      - "16686:16686"

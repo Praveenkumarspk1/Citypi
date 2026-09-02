@@ -1,0 +1,19 @@
+{
+  "name": "@concierge/api-client",
+  "version": "0.1.0",
+  "description": "Generated API client for AI Smart City Concierge",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc",
+    "generate": "openapi-typescript http://localhost:8000/openapi.json --output src/api.ts"
+  },
+  "dependencies": {
+    "axios": "^1.6.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.0",
+    "openapi-typescript": "^6.7.0"
+  }
+}
